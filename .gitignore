@@ -1,0 +1,15 @@
+# Dependency directory
+node_modules
+
+# Debug log from npm
+npm-debug.log
+
+# vim 
+*.swp
+
+# Logs
+logs
+*.log
+
+# bin
+bin
