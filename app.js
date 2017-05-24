@@ -5,8 +5,6 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var index = require('./routes/index');
-var users = require('./routes/users');
 var object = require('./routes/object');
 
 var app = express();
@@ -19,8 +17,10 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', index);
-app.use('/users', users);
+app.get('/', function(req, res, next) {
+  res.send('Home');
+});
+
 app.use('/object', object);
 
 app.use(function(req, res, next) {
@@ -30,19 +30,15 @@ app.use(function(req, res, next) {
 });
 
 app.use(function(err, req, res, next) {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  res.status(err.status || 500);
-  res.render('error');
+  res.status(err.status || 500).send({"code": err.status || 500, "msg": err.message});
 });
 
-const server = app.listen(3000, function () {
-  const host = server.address().address;
-  const port = server.address().port;
+var server = app.listen(3000, function () {
+  var host = server.address().address;
+  var port = server.address().port;
 
   console.log('Example app listening at http://%s:%s', host, port);
 });
 
-
 module.exports = app;
+

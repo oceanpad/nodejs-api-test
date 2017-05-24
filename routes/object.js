@@ -2,27 +2,38 @@ var express = require('express');
 var router = express.Router();
 var Sqlite= require('../apis/Sqlite');
 
-var datas = [["key", "value", 1495549866230], ["key", "value", 1495549866280]]
-
-// get /obejct
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  Sqlite.initDB();
+  res.send('object home page');
 });
 
-// get /obejct/key
 router.get('/:key', function(req, res, next) {
   var key = req.params.key;
   var timestamp = req.query.timestamp;
   if(typeof timestamp !== 'undefined'){
-    var record = findRecordByKeyAndTimestamp(key, timestamp)
-    res.send("record with timestamp: " + JSON.stringify(record));
+    if(isNaN(Number(timestamp))){
+      res.send("Please send right formatter timestamp.");
+      return;
+    }
+    Sqlite.selectLatestRowByKeyWithTimestamp(key, timestamp, function(rows){
+      if(rows.length === 0 || rows[0].key === null) {
+        res.send("No data is avilable");
+        return;
+      }
+      res.send(rows[0]);
+    });
     return;
   }
-  var record = findLatestRecordByKey(key)
-  res.send("Latest Record: " + JSON.stringify(record));
+  Sqlite.selectLatestRowByKey(key, function(rows){
+    if(rows.length === 0 || rows[0].key === null) {
+      res.send("No data is avilable");
+      return;
+    }
+    console.log(JSON.stringify(rows))
+    res.send(rows[0]);
+  })
 });
 
-// post /obejct data:{"key": "value'}
 router.post('/', function(req, res, next) {
   var paramKeys = Object.keys(req.body);
   if(paramKeys.length === 0){
@@ -31,29 +42,18 @@ router.post('/', function(req, res, next) {
     return;
   }
   var now = new Date();
-  var nowTime = now.getTime();
+  var nowTime = Math.round(now.getTime()/1000);
   for(var index in paramKeys){
     var key = paramKeys[index];
     var value = req.body[key];
-    var result = updateData(key, value, nowTime);
-    console.log(result);
+    updateData(key, value, nowTime.toString());
   }
-  res.send("Data updated: " + JSON.stringify(req.body));
+  res.send("Data updated!");
 });
 
 function updateData(key, value, timestamp){
-  Sqlite.selectRowsByKey("version", function(rows){
-    console.log(JSON.stringify(rows));
-  });
+  var result = [];
   Sqlite.insertData(key, value, timestamp);
-}
-
-function findLatestRecordByKey(key){
-  return {"key": "value"}
-}
-
-function findRecordByKeyAndTimestamp(key, timestamp){
-  return {"key": "value"}
 }
 
 module.exports = router;
